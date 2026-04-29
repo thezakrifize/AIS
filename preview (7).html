@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AIS Basic Quiz</title>
+<style>
+  :root{
+    --blue:#219ebc;
+    --dark:#023047;
+    --light:#8ecae6;
+    --yellow:#ffb703;
+    --orange:#fb8500;
+    --green:#2a9d8f;
+    --red:#e63946;
+    --bg:#f4f7fb;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family: Arial, Helvetica, sans-serif;
+    background:linear-gradient(135deg,#f8fbff,#eaf6fb);
+    color:var(--dark);
+    padding:24px;
+  }
+  .container{
+    max-width:980px;
+    margin:auto;
+  }
+  header{
+    background:linear-gradient(135deg,var(--dark),var(--blue));
+    color:white;
+    padding:28px;
+    border-radius:24px;
+    box-shadow:0 12px 30px rgba(2,48,71,.18);
+    margin-bottom:22px;
+  }
+  h1{margin:0 0 8px;font-size:32px}
+  .subtitle{opacity:.92;font-size:16px;line-height:1.5}
+  .question-card{
+    background:white;
+    border-radius:22px;
+    padding:22px;
+    margin:18px 0;
+    box-shadow:0 8px 24px rgba(2,48,71,.10);
+    border:1px solid rgba(33,158,188,.15);
+  }
+  .q-title{
+    font-size:19px;
+    font-weight:800;
+    margin-bottom:14px;
+  }
+  .choice{
+    display:block;
+    width:100%;
+    text-align:left;
+    border:2px solid #dcebf2;
+    background:#fff;
+    color:var(--dark);
+    padding:13px 15px;
+    border-radius:14px;
+    margin:10px 0;
+    cursor:pointer;
+    font-size:16px;
+    transition:.18s ease;
+  }
+  .choice:hover{
+    border-color:var(--blue);
+    transform:translateY(-1px);
+  }
+  .choice.correct{
+    border-color:var(--green);
+    background:#e8f7f4;
+    font-weight:700;
+  }
+  .choice.wrong{
+    border-color:var(--red);
+    background:#ffe8eb;
+    font-weight:700;
+  }
+  .choice:disabled{
+    cursor:not-allowed;
+    opacity:.95;
+  }
+  .explanation{
+    display:none;
+    margin-top:14px;
+    padding:14px 16px;
+    border-radius:14px;
+    line-height:1.55;
+    background:#f2f8fb;
+    border-left:6px solid var(--blue);
+  }
+  .explanation.show{display:block}
+  .result{
+    font-weight:800;
+    margin-bottom:6px;
+  }
+  .correct-text{color:var(--green)}
+  .wrong-text{color:var(--red)}
+  .score-circle{
+    position:fixed;
+    right:22px;
+    bottom:22px;
+    width:118px;
+    height:118px;
+    border-radius:50%;
+    background:conic-gradient(var(--red) 0deg, #eee 0deg);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 12px 30px rgba(0,0,0,.22);
+    z-index:99;
+  }
+  .score-inner{
+    width:88px;
+    height:88px;
+    border-radius:50%;
+    background:white;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    font-weight:900;
+    color:var(--dark);
+  }
+  .score-percent{font-size:25px}
+  .score-small{font-size:12px;opacity:.75}
+  .controls{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    margin:18px 0 26px;
+  }
+  .btn{
+    border:none;
+    padding:12px 18px;
+    border-radius:14px;
+    background:var(--orange);
+    color:white;
+    font-weight:800;
+    cursor:pointer;
+    box-shadow:0 8px 18px rgba(251,133,0,.25);
+  }
+  .btn.secondary{
+    background:var(--dark);
+    box-shadow:0 8px 18px rgba(2,48,71,.25);
+  }
+  .summary{
+    background:#fff8e5;
+    border:1px solid rgba(255,183,3,.4);
+    border-radius:18px;
+    padding:16px;
+    margin-top:16px;
+    line-height:1.55;
+  }
+  @media(max-width:640px){
+    body{padding:14px}
+    h1{font-size:25px}
+    .question-card{padding:18px}
+    .score-circle{width:96px;height:96px;right:14px;bottom:14px}
+    .score-inner{width:72px;height:72px}
+    .score-percent{font-size:21px}
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>AIS Basic Quiz</h1>
+    <div class="subtitle">
+      20 basic multiple-choice questions based on AIS responsibilities, functions, AIS products, AIP, NOTAM, and AIRAC.
+    </div>
+  </header>
+
+  <div class="controls">
+    <button class="btn" onclick="resetQuiz()">Reset Quiz</button>
+    <button class="btn secondary" onclick="showAllAnswers()">Show All Answers</button>
+  </div>
+
+  <div id="quiz"></div>
+
+  <div class="summary" id="finalSummary">
+    Answer the questions to see your live score. The score circle changes from red to green as your percentage improves.
+  </div>
+</div>
+
+<div class="score-circle" id="scoreCircle">
+  <div class="score-inner">
+    <div class="score-percent" id="scorePercent">0%</div>
+    <div class="score-small" id="scoreSmall">0 / 20</div>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    q:"What does AIS stand for?",
+    choices:["Air Information System","Aeronautical Information Service","Aviation Integrated System","Airspace Information Support"],
+    answer:1,
+    exp:"AIS stands for Aeronautical Information Service."
+  },
+  {
+    q:"What is the main objective of AIS?",
+    choices:["Increase airline profits","Ensure safety, regularity, and efficiency of air navigation","Control aircraft speed","Manage airport staff"],
+    answer:1,
+    exp:"AIS supports the safety, regularity, and efficiency of air navigation."
+  },
+  {
+    q:"AIS provides information mainly for whom?",
+    choices:["Passengers","Pilots and the ATM community","Hotel staff","Tour guides"],
+    answer:1,
+    exp:"AIS information is made available to the ATM community, including flight crews and flight planning."
+  },
+  {
+    q:"Which of the following is an AIS product?",
+    choices:["Weather radar","AIP","Aircraft engine","Fuel system"],
+    answer:1,
+    exp:"AIP is one of the main aeronautical information products."
+  },
+  {
+    q:"What does AIP stand for?",
+    choices:["Aeronautical Information Publication","Aviation Integration Plan","Aircraft Inspection Program","Airspace Improvement Plan"],
+    answer:0,
+    exp:"AIP stands for Aeronautical Information Publication."
+  },
+  {
+    q:"Which of the following is NOT an AIS product?",
+    choices:["NOTAM","AIC","Runway light","Aeronautical charts"],
+    answer:2,
+    exp:"Runway light is airport equipment, not an AIS product."
+  },
+  {
+    q:"AIS ensures information from where to where?",
+    choices:["Airport to aircraft only","Pilot to passenger","Data origination to distribution","Tower to ground vehicle"],
+    answer:2,
+    exp:"AIS provider ensures the quality and flow of information from data origination to distribution."
+  },
+  {
+    q:"Who collects, edits, formats, publishes, and distributes aeronautical information?",
+    choices:["Data originator","AIS provider","Pilot","Passenger"],
+    answer:1,
+    exp:"The AIS provider handles collecting, editing, formatting, publishing, and distributing information."
+  },
+  {
+    q:"What is the role of data originators?",
+    choices:["Publish charts","Survey, inspect, and compile data","Fly aircraft","Issue tickets"],
+    answer:1,
+    exp:"Data originators survey, inspect, and compile aeronautical data."
+  },
+  {
+    q:"What is NOT a user of AIS information?",
+    choices:["Flight crew","Flight planning unit","Flight simulator system","Restaurant staff"],
+    answer:3,
+    exp:"Restaurant staff are not part of the AIS user group shown in the lesson."
+  },
+  {
+    q:"Which system is used for significant AIP changes?",
+    choices:["NOTAM","AIRAC","Radar","GPS"],
+    answer:1,
+    exp:"Significant changes must be published under the regulated AIRAC system."
+  },
+  {
+    q:"AIRAC is mainly used for what type of changes?",
+    choices:["Minor spelling corrections","Significant operational changes","Passenger updates","Restaurant information"],
+    answer:1,
+    exp:"AIRAC is used for important establishment, withdrawal, or significant changes."
+  },
+  {
+    q:"AIP is divided into how many parts?",
+    choices:["Two","Three","Four","Five"],
+    answer:1,
+    exp:"The AIP is divided into three parts."
+  },
+  {
+    q:"Which of the following is NOT an AIP section?",
+    choices:["GEN","ENR","AD","MET"],
+    answer:3,
+    exp:"The three AIP parts are GEN, ENR, and AD. MET is not one of the three main AIP sections."
+  },
+  {
+    q:"What does ENR stand for in AIP?",
+    choices:["Entry","En-route","Engine","Energy"],
+    answer:1,
+    exp:"ENR stands for En-route."
+  },
+  {
+    q:"What does AD represent in AIP?",
+    choices:["Air Data","Aerodrome","Air Distance","Aviation Design"],
+    answer:1,
+    exp:"AD represents Aerodrome."
+  },
+  {
+    q:"Which AIS product provides time-sensitive or temporary information?",
+    choices:["AIP","NOTAM","Permanent chart only","Training manual"],
+    answer:1,
+    exp:"NOTAM is used to provide timely aeronautical information."
+  },
+  {
+    q:"What does NOTAM stand for?",
+    choices:["Notice to Airmen","Note to Airport Management","Navigation Air Map","Notice for Air Maintenance"],
+    answer:0,
+    exp:"NOTAM traditionally stands for Notice to Airmen."
+  },
+  {
+    q:"AIS information supports which service?",
+    choices:["Catering service","Flight Information Service","Hotel service","Cargo delivery only"],
+    answer:1,
+    exp:"AIS information supports services such as Flight Information Service and pre-flight information."
+  },
+  {
+    q:"What is the final step in the simplified AIS information process?",
+    choices:["Data collection","Data editing","Distribution to users","Data inspection"],
+    answer:2,
+    exp:"The simplified flow ends with users receiving or accessing the provided information."
+  }
+];
+
+let answered = Array(questions.length).fill(false);
+let correctCount = 0;
+
+function renderQuiz(){
+  const quiz = document.getElementById("quiz");
+  quiz.innerHTML = "";
+  questions.forEach((item, index) => {
+    const card = document.createElement("div");
+    card.className = "question-card";
+    card.innerHTML = `
+      <div class="q-title">${index+1}. ${item.q}</div>
+      ${item.choices.map((c,i)=>`
+        <button class="choice" onclick="answerQuestion(${index},${i},this)">
+          ${String.fromCharCode(65+i)}. ${c}
+        </button>
+      `).join("")}
+      <div class="explanation" id="exp-${index}">
+        <div class="result" id="result-${index}"></div>
+        <div><strong>Correct answer:</strong> ${String.fromCharCode(65+item.answer)}. ${item.choices[item.answer]}</div>
+        <div>${item.exp}</div>
+      </div>
+    `;
+    quiz.appendChild(card);
+  });
+  updateScore();
+}
+
+function answerQuestion(qIndex, choiceIndex, btn){
+  if(answered[qIndex]) return;
+  answered[qIndex] = true;
+
+  const card = btn.closest(".question-card");
+  const buttons = card.querySelectorAll(".choice");
+  buttons.forEach((b,i)=>{
+    b.disabled = true;
+    if(i === questions[qIndex].answer) b.classList.add("correct");
+  });
+
+  const result = document.getElementById(`result-${qIndex}`);
+  if(choiceIndex === questions[qIndex].answer){
+    correctCount++;
+    result.textContent = "Correct ✅";
+    result.className = "result correct-text";
+  }else{
+    btn.classList.add("wrong");
+    result.textContent = "Incorrect ❌";
+    result.className = "result wrong-text";
+  }
+
+  document.getElementById(`exp-${qIndex}`).classList.add("show");
+  updateScore();
+}
+
+function updateScore(){
+  const totalAnswered = answered.filter(Boolean).length;
+  const percent = totalAnswered === 0 ? 0 : Math.round((correctCount / totalAnswered) * 100);
+  const overallPercent = Math.round((correctCount / questions.length) * 100);
+  const degree = (overallPercent / 100) * 360;
+  const color = getScoreColor(overallPercent);
+
+  document.getElementById("scorePercent").textContent = `${overallPercent}%`;
+  document.getElementById("scoreSmall").textContent = `${correctCount} / ${questions.length}`;
+  document.getElementById("scoreCircle").style.background =
+    `conic-gradient(${color} ${degree}deg, #e9eef2 ${degree}deg)`;
+
+  const summary = document.getElementById("finalSummary");
+  if(totalAnswered === questions.length){
+    summary.innerHTML = `<strong>Quiz completed!</strong><br>Your final score is <strong>${correctCount} / ${questions.length}</strong> (${overallPercent}%).`;
+  }else{
+    summary.innerHTML = `Answered: <strong>${totalAnswered} / ${questions.length}</strong><br>Current correct answers: <strong>${correctCount}</strong>.`;
+  }
+}
+
+function getScoreColor(p){
+  if(p < 50) return "#e63946";
+  if(p < 70) return "#fb8500";
+  if(p < 85) return "#ffb703";
+  return "#2a9d8f";
+}
+
+function resetQuiz(){
+  answered = Array(questions.length).fill(false);
+  correctCount = 0;
+  renderQuiz();
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function showAllAnswers(){
+  questions.forEach((q, index)=>{
+    if(!answered[index]){
+      answered[index] = true;
+      const card = document.querySelectorAll(".question-card")[index];
+      const buttons = card.querySelectorAll(".choice");
+      buttons.forEach((b,i)=>{
+        b.disabled = true;
+        if(i === q.answer) b.classList.add("correct");
+      });
+      const result = document.getElementById(`result-${index}`);
+      result.textContent = "Answer shown 👀";
+      result.className = "result correct-text";
+      document.getElementById(`exp-${index}`).classList.add("show");
+    }
+  });
+  correctCount = questions.length;
+  updateScore();
+}
+
+renderQuiz();
+</script>
+</body>
+</html>
